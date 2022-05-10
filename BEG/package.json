@@ -1,0 +1,25 @@
+{
+  "name": "devel",
+  "version": "1.0.0",
+  "description": "",
+  "main": "netNode.js",
+  "dependencies": {
+    "crypto-js": "^4.1.1",
+    "js-sha256": "^0.9.0",
+    "nodemon": "^2.0.15",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "node_1": "nodemon --watch dev -e js BEG/netNode.js 3001 http://localhost:3001",
+    "node_2": "nodemon --watch dev -e js BEG/netNode.js 3002 http://localhost:3002",
+    "node_3": "nodemon --watch dev -e js BEG/netNode.js 3003 http://localhost:3003",
+    "node_4": "nodemon --watch dev -e js BEG/netNode.js 3004 http://localhost:3004",
+    "node_5": "nodemon --watch dev -e js BEG/netNode.js 3005 http://localhost:3005"
+  },
+  "author": "",
+  "license": "ISC"
+}
