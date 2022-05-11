@@ -122,7 +122,7 @@ app.post("/register-nodes-bulk", function (req, res) {
       meddata.networkNodes.indexOf(networkNodeUrl) == -1;
     const notCurrentNode = meddata.currentNodeUrl !== networkNodeUrl;
     if (nodeNotAlreadyPresent && notCurrentNode)
-      bitcoin.networkNodes.push(networkNodeUrl);
+      meddata.networkNodes.push(networkNodeUrl);
   });
 
   res.json({ note: "Bulk registration successful." });
