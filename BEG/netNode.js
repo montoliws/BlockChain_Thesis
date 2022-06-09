@@ -6,6 +6,7 @@ var app = express();
 const { v4 } = require("uuid");
 const nodeAddress = v4().split("-").join("");
 const rp = require("request-promise");
+// request-promise is deprecated ?¿?¿? Hay que solucionarlo ¿Problema?
 //To have different port values every time
 const port = process.argv[2];
 
@@ -85,7 +86,12 @@ app.post("/register-and-broadcast-node", function (req, res) {
 
     regNodesPromises.push(rp(requestOptions));
   });
-
+  /**
+   * El método Promise.all(iterable) devuelve una promesa que termina
+   * correctamente cuando todas las promesas en el argumento iterable
+   * han sido concluídas con éxito, o bien rechaza la petición con el
+   * motivo pasado por la primera promesa que es rechazada.
+   */
   Promise.all(regNodesPromises)
     .then((data) => {
       const bulkRegisterOptions = {
@@ -100,6 +106,11 @@ app.post("/register-and-broadcast-node", function (req, res) {
       return rp(bulkRegisterOptions);
     })
     .then((data) => {
+      /**
+       * La variable data son los datos que recivimos de la promesa de arriba.
+       * No vamos a utilizar estos datos pero hay que hacer este paso dentro de
+       * este endpoint por lo que solo podemos hacerlo una vez la promesa se ha completado.
+       */
       res.json({ note: "New node registered with network successfully." });
     });
 });
@@ -114,7 +125,10 @@ app.post("/register-node", function (req, res) {
 
   res.json({ note: "Nuevo nodo registrado correctamente." });
 });
-
+/**
+ * This endpoint is accepting all of the network nodes and data, and we do a
+ * cycle with all the network nodes that are already present on the blkchain network
+ */
 app.post("/register-nodes-bulk", function (req, res) {
   const allNetworkNodes = req.body.allNetworkNodes;
   allNetworkNodes.forEach((networkNodeUrl) => {
