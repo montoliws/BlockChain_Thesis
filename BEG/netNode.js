@@ -21,8 +21,29 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 const meddata = new Blockchain();
 
-app.get("/", function (req, res) {
-  res.send("Hello world");
+app.post("/transaction/broadcast", function (req, res) {
+  const newTransaction = meddata.createNewTransaction(
+    req.body.amount,
+    req.body.sender,
+    req.body.receptor
+  );
+  meddata.addTransactionToPendingTransactions(newTransaction);
+  const requestPromises = [];
+  meddata.networkNodes.forEach((networkNodeUrl) => {
+    const requestOptions = {
+      uri: networkNodeUrl + "/transaction",
+      method: "POST",
+      body: newTransaction,
+      json: true,
+    };
+
+    requestPromises.push(rp(requestOptions));
+  });
+  Promise.all(requestPromises).then((data) => {
+    res.json({
+      note: "La transacción ha sido creada y distribuida correctamente.",
+    });
+  });
 });
 
 app.get("/blockchain", function (req, res) {
@@ -30,13 +51,12 @@ app.get("/blockchain", function (req, res) {
 });
 
 app.post("/transaction", function (req, res) {
-  const blockIndex = meddata.createNewTransaction(
-    req.body.data,
-    req.body.sender,
-    req.body.recipient
-  );
-
-  res.json({ note: `Transaction will be added in block ${blockIndex}.` });
+  const newTransaction = req.body;
+  const blockIndex =
+    meddata.addTransactionToPendingTransactions(newTransaction);
+  res.json({
+    note: `La transacción será añadida en el bloque: ${blockIndex}.`,
+  });
 });
 
 app.get("/mine", function (req, res) {
@@ -47,7 +67,7 @@ app.get("/mine", function (req, res) {
     index: lastBlock["index"] + 1,
   };
   const nonce = meddata.proofOfWork(previousBlockHash, currentBlockData);
-  const newBlock = upvcoin.createNewBlock(
+  const newBlock = meddata.createNewBlock(
     nonce,
     previousBlockHash,
     newBlockHash
@@ -126,10 +146,12 @@ app.post("/register-node", function (req, res) {
   res.json({ note: "Nuevo nodo registrado correctamente." });
 });
 /**
- * This endpoint is accepting all of the network nodes and data, and we do a
- * cycle with all the network nodes that are already present on the blkchain network
+ * This endpoint is accepting all data that contains every URL of every node that
+ *  are already present on the blkchain network. This endpoint is only ever hit on
+ * a new node that's being added to our network.
  */
 app.post("/register-nodes-bulk", function (req, res) {
+  /** We are sending allNetworkNodes to register-nodes-bulk to have access to allNetworkNodes data */
   const allNetworkNodes = req.body.allNetworkNodes;
   allNetworkNodes.forEach((networkNodeUrl) => {
     const nodeNotAlreadyPresent =

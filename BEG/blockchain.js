@@ -1,7 +1,10 @@
 //CREAR UN REGISTRO DE ACCESOS CON UUID.
 var sha256 = require("js-sha256");
 const currentNodeUrl = process.argv[3];
+const { v4 } = require("uuid");
+
 module.exports = Blockchain;
+
 function Blockchain() {
   //All the blocks that we mine will be stored in this particular array
   this.chain = [];
@@ -62,14 +65,17 @@ Blockchain.prototype.getLastBlock = function () {
   return this.chain[this.chain.length - 1];
 };
 
-Blockchain.prototype.createNewTransaction = function (data, sender, recipient) {
+Blockchain.prototype.createNewTransaction = function (data, sender, receptor) {
   const newTransaction = {
     data: data,
     sender: sender,
-    recipient: recipient,
+    receptor: receptor,
+    TransUUID: v4().split("-").join(""),
+    /**Unique Id for every transaction */
   };
-  this.pendingTransactions.push(newTransaction);
+  return newTransaction;
   /*
+  this.pendingTransactions.push(newTransaction);
 devolvemos el último bloque, obtenemos el indice de este bloque
 (['index']) y al añadir + 1 nos da el número de bloque de la 
 transacción que acabamos de añadir
@@ -77,8 +83,9 @@ transacción que acabamos de añadir
   /**
    * NOTA: AÑADIR ['variable'] AL LADO DE UN OBJETO, OBTIENE EL VALOR
    * DE ESA 'variable' EN ESE OBJETO CONCRETO.
+   * return this.getLastBlock()["index"] + 1;
    */
-  return this.getLastBlock()["index"] + 1;
+
   /**
    * Si creamos una transacción antes de un bloque, este la recogerá
    * dentro de su variable transactions y se vaciará el array
@@ -110,4 +117,11 @@ Blockchain.prototype.proofOfWork = function (
     hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
   }
   return nonce;
+};
+
+Blockchain.prototype.addTransactionToPendingTransactions = function (
+  ObjTransaction
+) {
+  this.pendingTransactions.push(ObjTransaction);
+  return this.getLastBlock()["index"] + 1;
 };
