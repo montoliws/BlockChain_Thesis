@@ -2,6 +2,8 @@
 var sha256 = require("js-sha256");
 const currentNodeUrl = process.argv[3];
 const { v4 } = require("uuid");
+let mongoose = require("mongoose");
+let blockchainModel = mongoose.model("BlockSchema");
 
 module.exports = Blockchain;
 

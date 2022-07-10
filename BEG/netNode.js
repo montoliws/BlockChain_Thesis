@@ -1,6 +1,7 @@
 //CREAR UN REGISTRO DE ACCESOS CON UUID
 var express = require("express");
 var app = express();
+var mongoose = require("mongoose");
 
 //Set a random value as a user id
 const { v4 } = require("uuid");
@@ -9,6 +10,9 @@ const rp = require("request-promise");
 // request-promise is deprecated ?¿?¿? Hay que solucionarlo ¿Problema?
 //To have different port values every time
 const port = process.argv[2];
+let database = require("./database");
+let chalk = require("chalk");
+let blockchainModel = mongoose.model("BlockSchema");
 
 /**This lines are stating that if a request comes in with JSON data or with form data, we simply want to parse
  * that data so we can access it in any of the endpoints. So with any endpoint we hit,
@@ -23,7 +27,7 @@ const meddata = new Blockchain();
 
 app.post("/transaction/broadcast", function (req, res) {
   const newTransaction = meddata.createNewTransaction(
-    req.body.amount,
+    req.body.data,
     req.body.sender,
     req.body.receptor
   );
@@ -66,16 +70,44 @@ app.get("/mine", function (req, res) {
     trasactions: meddata.pendingTransactions,
     index: lastBlock["index"] + 1,
   };
+
   const nonce = meddata.proofOfWork(previousBlockHash, currentBlockData);
+
+  const newBlockHash = meddata.hashBlock(
+    previousBlockHash,
+    currentBlockData,
+    nonce
+  );
+
   const newBlock = meddata.createNewBlock(
     nonce,
     previousBlockHash,
     newBlockHash
   );
-  res.json({
-    note: "New block is mined successfully",
-    block: newBlock,
+  const requestPromises = [];
+  meddata.networkNodes.forEach((networkNodeUrl) => {
+    const requestOptions = {
+      uri: networkNodeUrl + "/recive-new-block",
+      method: "POST",
+      body: { newBlock: newBlock },
+      json: true,
+    };
+    requestPromises.push(rp(requestOptions));
   });
+  Promise.all(requestPromises).then((data) => {
+    res.json({
+      note: "New block is mined successfully",
+      block: newBlock,
+    });
+  });
+  /*
+  let newBlockMod = new blockchainModel(newBlock);
+  console.log(newBlockMod);
+ newBlockMod.save((err) => {
+    if (err)
+      return console.log(chalk.red("cannot save the block", err.message));
+    console.log(chalk.green("Block saved on DB"));
+  });*/
 
   /**Reward for mining a block
    * meddata.createNewTransaction(12, "11", nodeAddress)
@@ -135,6 +167,26 @@ app.post("/register-and-broadcast-node", function (req, res) {
     });
 });
 
+app.post("/recive-new-block", function (req, res) {
+  const newBlock = req.body.newBlock;
+  const lastBlock = meddata.getLastBlock();
+  if (
+    lastBlock.hash === newBlock.previousBlockHash &&
+    lastBlock["index"] + 1 === newBlock["index"]
+  ) {
+    meddata.chain.push(newBlock);
+    meddata.pendingTransactions = [];
+    res.json({
+      note: "El nuevo bloque ha sido recibido y aceptado con exito",
+      newBlock: newBlock,
+    });
+  } else {
+    res.json({
+      note: "El nuevo bloque ha sido rechazado.",
+      newBlock: newBlock,
+    });
+  }
+});
 //This endpoint will register a node with the network
 app.post("/register-node", function (req, res) {
   const newNodeUrl = req.body.newNodeUrl;

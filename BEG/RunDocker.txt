@@ -1,0 +1,15 @@
+docker run -dit --name mongo -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=root_pass mongo
+Para crear los usuarios:
+docker exec -it mongo bash
+mongo admin -u root -p toor
+db.createUser({user: “user",pwd: “PASSWORD",roles: [{ role: "readWrite", db: “blockchain" }]})
+
+También puedes poner un mongo express para gestionarlo visualmente (no es necesario)
+
+docker run -d -e ME_CONFIG_MONGODB_SERVER=IP_del_servidor -e ME_CONFIG_MONGODB_ADMINUSERNAME=root -e ME_CONFIG_MONGODB_ADMINPASSWORD=root_pass -e ME_CONFIG_BASICAUTH_USERNAME=user -e ME_CONFIG_BASICAUTH_PASSWORD=user_pass -p 88:8081 --name mongo-express mongo-express
+  let newBlockMod = new blockchainModel(this.newBlock);
+  newBlockMod.save((err) => {
+    if (err)
+      return console.log(chalk.red("cannot save the block", err.message));
+    console.log(chalk.green("Block saved on DB"));
+  });
