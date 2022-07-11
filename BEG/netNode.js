@@ -67,7 +67,7 @@ app.get("/mine", async function (req, res) {
   const lastBlock = meddata.getLastBlock();
   const previousBlockHash = lastBlock["hash"];
   const currentBlockData = {
-    trasactions: meddata.pendingTransactions,
+    transactions: meddata.pendingTransactions,
     index: lastBlock["index"] + 1,
   };
   console.log("Antes del nonce");
@@ -218,6 +218,48 @@ app.post("/register-nodes-bulk", function (req, res) {
 
   res.json({ note: "Bulk registration successful." });
 });
+
+app.get("/consensus", function (req, res) {
+  const requestPromises = [];
+  meddata.networkNodes.forEach((networkNodeUrl) => {
+    const requestOptions = {
+      uri: networkNodeUrl + "/blockchain",
+      method: "GET",
+      json: true,
+    };
+    requestPromises.push(rp(requestOptions));
+  });
+  Promise.all(requestPromises).then((blockchains) => {
+    const chainLength = meddata.chain.length;
+    let maxLength = chainLength;
+    let newLongestChain = null;
+    let newPendingTransactions = null;
+    blockchains.forEach((blockchain) => {
+      if (blockchain.chain.length > maxLength) {
+        maxLength = blockchain.chain.length;
+        newLongestChain = blockchain.chain;
+        newPendingTransactions = blockchain.pendingTransactions;
+      }
+    });
+    if (
+      !newLongestChain ||
+      (newLongestChain && !meddata.chainValidation(newLongestChain))
+    ) {
+      res.json({
+        note: "La cadena actual no va a ser reemplazada.",
+        chain: meddata.chain,
+      });
+    } else {
+      meddata.chain = newLongestChain;
+      meddata.pendingTransactions = newPendingTransactions;
+      res.json({
+        note: "La cadena actual ha sido reemplazada.",
+        chain: meddata.chain,
+      });
+    }
+  });
+});
+
 app.listen(port, function () {
   console.log(`Aplicación escuchando en el puerto: ${port}`);
 });

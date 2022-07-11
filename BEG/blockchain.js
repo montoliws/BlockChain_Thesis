@@ -113,9 +113,9 @@ Blockchain.prototype.proofOfWork = function (
   currentBlockData
 ) {
   let nonce = 0;
-  console.log("ANTES");
+
   let hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
-  console.log("DESPUES");
+
   while (hash.substring(0, 4) !== "0000") {
     nonce++;
     hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
@@ -151,11 +151,15 @@ Blockchain.prototype.chainValidation = function (blockchain) {
         "hash previo: " +
           bloquePrev["hash"] +
           " TRANSACCIONES: " +
-          bloqueAct["transactions"] +
+          JSON.stringify(bloqueAct["transactions"]) +
           "IIIndice:  " +
           bloqueAct["index"] +
           " HAsh resultante" +
-          hashBlockconst.substring(0, 4)
+          hashBlockconst.substring(0, 4) +
+          "HASH ACTUAL: " +
+          bloqueAct["hash"] +
+          "NONCE : " +
+          bloqueAct["nonce"]
       );
       cadenaValida = false;
     }
