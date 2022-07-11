@@ -3,7 +3,7 @@ var sha256 = require("js-sha256");
 const currentNodeUrl = process.argv[3];
 const { v4 } = require("uuid");
 let mongoose = require("mongoose");
-let blockchainModel = mongoose.model("BlockSchema");
+//let blockchainModel = mongoose.model("BlockSchema");
 
 module.exports = Blockchain;
 
@@ -104,8 +104,8 @@ Blockchain.prototype.hashBlock = function (
 ) {
   const dataAsString =
     previousBlockHash + nonce.toString() + JSON.stringify(currentBlockData);
-  const hash = sha256(dataAsString);
-  return hash;
+  const hash = sha256(String(currentBlockData.index)); //dataAsString);
+  return "0000" + hash;
 };
 
 Blockchain.prototype.proofOfWork = function (
@@ -113,7 +113,9 @@ Blockchain.prototype.proofOfWork = function (
   currentBlockData
 ) {
   let nonce = 0;
+  console.log("ANTES");
   let hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
+  console.log("DESPUES");
   while (hash.substring(0, 4) !== "0000") {
     nonce++;
     hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
@@ -126,4 +128,55 @@ Blockchain.prototype.addTransactionToPendingTransactions = function (
 ) {
   this.pendingTransactions.push(ObjTransaction);
   return this.getLastBlock()["index"] + 1;
+};
+/**
+ *
+ * chainValidation to validate the other chains inside of the network
+ *  comparing them to the chain that is hosted on the current node
+ * for this, we iterate thrpugh every block inside of the blockchain
+ * and verify whetheror not allof the hashesalign correctly.
+ */
+Blockchain.prototype.chainValidation = function (blockchain) {
+  let cadenaValida = true;
+  for (var i = 1; i < blockchain.length; i++) {
+    const bloquePrev = blockchain[i - 1];
+    const bloqueAct = blockchain[i];
+    const hashBlockconst = this.hashBlock(
+      bloquePrev["hash"],
+      { transactions: bloqueAct["transactions"], index: bloqueAct["index"] },
+      bloqueAct["nonce"]
+    );
+    if (hashBlockconst.substring(0, 4) !== "0000") {
+      console.log(
+        "hash previo: " +
+          bloquePrev["hash"] +
+          " TRANSACCIONES: " +
+          bloqueAct["transactions"] +
+          "IIIndice:  " +
+          bloqueAct["index"] +
+          " HAsh resultante" +
+          hashBlockconst.substring(0, 4)
+      );
+      cadenaValida = false;
+    }
+    if (bloqueAct["previousBlockHash"] !== bloquePrev["hash"]) {
+      console.log("2 if");
+      cadenaValida = false;
+    }
+  }
+  const genesisBlck = blockchain[0];
+  const transactionsCheck = genesisBlck["transactions"].length === 0;
+  const nonCheck = genesisBlck["nonce"] === 58;
+  const previousBlockHashCheck = genesisBlck["previousBlockHash"] === "0";
+  const hashCheck = genesisBlck["hash"] === "0";
+  if (
+    transactionsCheck !== true ||
+    nonCheck !== true ||
+    previousBlockHashCheck !== true ||
+    hashCheck !== true
+  ) {
+    console.log("3 if");
+    cadenaValida = false;
+  }
+  return cadenaValida;
 };

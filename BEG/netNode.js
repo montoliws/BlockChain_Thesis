@@ -63,22 +63,22 @@ app.post("/transaction", function (req, res) {
   });
 });
 
-app.get("/mine", function (req, res) {
+app.get("/mine", async function (req, res) {
   const lastBlock = meddata.getLastBlock();
   const previousBlockHash = lastBlock["hash"];
   const currentBlockData = {
     trasactions: meddata.pendingTransactions,
     index: lastBlock["index"] + 1,
   };
-
+  console.log("Antes del nonce");
   const nonce = meddata.proofOfWork(previousBlockHash, currentBlockData);
-
+  console.log("Despues del nonce");
   const newBlockHash = meddata.hashBlock(
     previousBlockHash,
     currentBlockData,
     nonce
   );
-
+  console.log;
   const newBlock = meddata.createNewBlock(
     nonce,
     previousBlockHash,
@@ -96,20 +96,21 @@ app.get("/mine", function (req, res) {
   });
   Promise.all(requestPromises).then((data) => {
     res.json({
-      note: "New block is mined successfully",
+      note: "Se ha completado el minado de un nuevo nodo",
       block: newBlock,
     });
   });
-  /*
+
   let newBlockMod = new blockchainModel(newBlock);
   console.log(newBlockMod);
- newBlockMod.save((err) => {
+
+  newBlockMod = await newBlockMod.save((err) => {
     if (err)
       return console.log(chalk.red("cannot save the block", err.message));
     console.log(chalk.green("Block saved on DB"));
-  });*/
+  });
 
-  /**Reward for mining a block
+  /**Reward for mining a blockSi
    * meddata.createNewTransaction(12, "11", nodeAddress)
    */
 });
@@ -163,7 +164,9 @@ app.post("/register-and-broadcast-node", function (req, res) {
        * No vamos a utilizar estos datos pero hay que hacer este paso dentro de
        * este endpoint por lo que solo podemos hacerlo una vez la promesa se ha completado.
        */
-      res.json({ note: "New node registered with network successfully." });
+      res.json({
+        note: "El nuevo nodo ha sido correctamente registrado en la red.",
+      });
     });
 });
 
@@ -216,5 +219,5 @@ app.post("/register-nodes-bulk", function (req, res) {
   res.json({ note: "Bulk registration successful." });
 });
 app.listen(port, function () {
-  console.log(`listening on port ${port}`);
+  console.log(`Aplicación escuchando en el puerto: ${port}`);
 });
