@@ -104,8 +104,8 @@ Blockchain.prototype.hashBlock = function (
 ) {
   const dataAsString =
     previousBlockHash + nonce.toString() + JSON.stringify(currentBlockData);
-  const hash = sha256(String(currentBlockData.index)); //dataAsString);
-  return "0000" + hash;
+  const hash = sha256(dataAsString);
+  return hash;
 };
 
 Blockchain.prototype.proofOfWork = function (
