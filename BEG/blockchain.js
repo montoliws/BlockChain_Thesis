@@ -3,19 +3,59 @@ var sha256 = require("js-sha256");
 const currentNodeUrl = process.argv[3];
 const { v4 } = require("uuid");
 let mongoose = require("mongoose");
-//let blockchainModel = mongoose.model("BlockSchema");
-
+let blockchainModel = mongoose.model("BlockSchema");
+const macadenain = require("./database/index");
+const { MongoClient } = require("mongodb");
 module.exports = Blockchain;
+const options = {
+  /**user: "user",
+  pass: "PASSWORD",
+  */
+  auth: {
+    username: "user",
+    password: "PASSWORD",
+  },
+};
+const uri = "mongodb://localhost:27017/Blockchain";
+const client = new MongoClient(uri, options);
+async function main() {
+  try {
+    // Connect to the MongoDB cluster
+    await client.connect();
+    await listDatabases(client);
+    // Make the appropriate DB calls
+  } catch (e) {
+    console.error(e);
+  }
+}
 
+main().catch(console.error);
+
+async function listDatabases(client) {
+  var cursor = await client
+    .db("Blockchain")
+    .collection("blockschemas")
+    .find()
+    .toArray();
+  console.log(typeof cursor);
+  //console.log(Object.values(cursor));
+}
+
+async function fckPromises() {
+  var x = await listDatabases(client);
+}
 function Blockchain() {
   //All the blocks that we mine will be stored in this particular array
+
   this.chain = [];
   //Where we hold all of the new transactions before they are placed into a block
   this.pendingTransactions = [];
   this.networkNodes = [];
   this.currentNodeUrl = currentNodeUrl;
   //To create our genesis block we use createNewBlock method inside Blockchain
-  this.createNewBlock(58, "0", "0");
+  if (this.chain.length == 0) {
+    this.createNewBlock(58, "0", "0");
+  }
 }
 
 Blockchain.prototype.createNewBlock = function (
