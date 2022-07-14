@@ -67,23 +67,9 @@ function Blockchain() {
   (async () => {
     await chains();
   })();
-  console.log(
-    pepas(async function main() {
-      try {
-        // Connect to the MongoDB cluster
-        await client.connect();
-        const data = await listDatabases(client);
-        //console.log(data);
-
-        return Object.values(data);
-
-        // Make the appropriate DB calls
-      } catch (e) {
-        console.error(e);
-      }
-    })
-  );
+  console.log(cadem);
   this.chain = [];
+  //this.chain = cadem
   //Where we hold all of the new transactions before they are placed into a block
   this.pendingTransactions = [];
   this.networkNodes = [];
