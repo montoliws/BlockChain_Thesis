@@ -1,4 +1,5 @@
 //CREAR UN REGISTRO DE ACCESOS CON UUID.
+
 var sha256 = require("js-sha256");
 const currentNodeUrl = process.argv[3];
 const { v4 } = require("uuid");
@@ -6,6 +7,7 @@ let mongoose = require("mongoose");
 let blockchainModel = mongoose.model("BlockSchema");
 const macadenain = require("./database/index");
 const { MongoClient } = require("mongodb");
+global.cadem = [];
 module.exports = Blockchain;
 const options = {
   /**user: "user",
@@ -22,7 +24,11 @@ async function main() {
   try {
     // Connect to the MongoDB cluster
     await client.connect();
-    await listDatabases(client);
+    const data = await listDatabases(client);
+    //console.log(data);
+
+    return Object.values(data);
+
     // Make the appropriate DB calls
   } catch (e) {
     console.error(e);
@@ -32,30 +38,59 @@ async function main() {
 main().catch(console.error);
 
 async function listDatabases(client) {
-  var cursor = await client
+  const cursor = await client
     .db("Blockchain")
     .collection("blockschemas")
     .find()
     .toArray();
-  console.log(typeof cursor);
-  //console.log(Object.values(cursor));
+
+  pepas(Object.values(cursor));
+  return Object.values(cursor);
+}
+function pepas(hola) {
+  cadem = hola;
+  //console.log(chaine);
+  //console.log(cadem);
+  return cadem;
 }
 
-async function fckPromises() {
-  var x = await listDatabases(client);
-}
 function Blockchain() {
   //All the blocks that we mine will be stored in this particular array
 
+  //All the blocks that we mine will be stored in this particular array
+  const chains = async () => {
+    await main();
+    //console.log(main());
+    //console.log(cadena);
+  };
+
+  (async () => {
+    await chains();
+  })();
+  console.log(
+    pepas(async function main() {
+      try {
+        // Connect to the MongoDB cluster
+        await client.connect();
+        const data = await listDatabases(client);
+        //console.log(data);
+
+        return Object.values(data);
+
+        // Make the appropriate DB calls
+      } catch (e) {
+        console.error(e);
+      }
+    })
+  );
   this.chain = [];
   //Where we hold all of the new transactions before they are placed into a block
   this.pendingTransactions = [];
   this.networkNodes = [];
   this.currentNodeUrl = currentNodeUrl;
   //To create our genesis block we use createNewBlock method inside Blockchain
-  if (this.chain.length == 0) {
-    this.createNewBlock(58, "0", "0");
-  }
+
+  this.createNewBlock(58, "0", "0");
 }
 
 Blockchain.prototype.createNewBlock = function (

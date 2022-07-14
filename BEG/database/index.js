@@ -11,25 +11,24 @@ const options = {
     password: "PASSWORD",
   },
 };
-/**
+
 mongoose.connect("mongodb://localhost:27017/Blockchain", options);
 let connectionCallback = () => {};
 module.exports.onConnect = (callback) => {
   connectionCallback = callback;
 };
-/** 
+const uri = "mongodb://localhost:27017/Blockchain";
+const client = new MongoClient(uri, options);
 async function main() {
-  const uri = "mongodb://localhost:27017/Blockchain";
-
-  const client = new MongoClient(uri, options);
-
   try {
     // Connect to the MongoDB cluster
     await client.connect();
+    var data = listDatabases(client);
+    console.log(Object.values(data));
+
+    return Object.values(data);
 
     // Make the appropriate DB calls
-
-    return await listDatabases(client);
   } catch (e) {
     console.error(e);
   }
@@ -43,6 +42,6 @@ async function listDatabases(client) {
     .collection("blockschemas")
     .find()
     .toArray();
-  return cursor;
+  //console.log(Object.values(cursor));
+  return Object.values(cursor);
 }
-*/
