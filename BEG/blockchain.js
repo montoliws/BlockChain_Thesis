@@ -2,14 +2,6 @@
 var sha256 = require("js-sha256");
 const currentNodeUrl = process.argv[3];
 const { v4 } = require("uuid");
-let mongoose = require("mongoose");
-<<<<<<< Updated upstream
-//let blockchainModel = mongoose.model("BlockSchema");
-
-=======
-let blockchainModel = mongoose.model("BlockSchema");
-const macadenain = require("./database/index");
->>>>>>> Stashed changes
 module.exports = Blockchain;
 
 function Blockchain() {
@@ -29,8 +21,7 @@ Blockchain.prototype.createNewBlock = function (
   hash
 ) {
   /*This newBlock object is going to be a new block inside of our Blockchain, so all
-  the data is going to be stored inside of this block
-*/
+  the data is going to be stored inside of this block*/
   const newBlock = {
     // index: block number
     index: this.chain.length + 1,
@@ -39,29 +30,26 @@ Blockchain.prototype.createNewBlock = function (
     // transactions: the new transactions that are waiting to be placed into a block
     transactions: this.pendingTransactions,
     /**This nonce is a proof that we've creaated this new block in a legitimate way
-     * by using proofOfWork
-     *  */
+     * by using proofOfWork*  */
     nonce: nonce,
-
     //hash: We pass our newTransaction into a hashing function
     hash: hash,
     previousBlockHash: previousBlockHash,
   };
   /**
-         * When creating a new block, we put all of the new transactions into the newBlock
-         * Therefore, we want to clear out the entire pendingTransactions array so that we can start
-         * over for the next block.
-         *  However, all of the transactions in this array are not really set
-            in stone. They're not really recorded in our blockchain yet.
-            They will get recorded in our blockchain when a new block is
-            mined, which is when a new block is created. All of these new
-            transactions are pretty much just pending transactions, and
-            they have not been validated yet. They get validated, set in
-            stone, and recorded in our blockchain when we create a new
-            block with the help of the createNewBlock method.
-            |pendingTransactions| property is like a pending transactions property.||
+    When creating a new block, we put all of the new transactions into the newBlock
+    Therefore, we want to clear out the entire pendingTransactions array so that we can start
+    over for the next block.
+    However, all of the transactions in this array are not really set
+    in stone. They're not really recorded in our blockchain yet.
+    They will get recorded in our blockchain when a new block is
+    mined, which is when a new block is created. All of these new
+    transactions are pretty much just pending transactions, and
+    they have not been validated yet. They get validated, set in
+    stone, and recorded in our blockchain when we create a new
+    block with the help of the createNewBlock method.
+    |pendingTransactions| property is like a pending transactions property.|| */
 
-         */
   this.pendingTransactions = [];
   this.chain.push(newBlock);
 
@@ -72,21 +60,25 @@ Blockchain.prototype.getLastBlock = function () {
   return this.chain[this.chain.length - 1];
 };
 
-Blockchain.prototype.createNewTransaction = function (data, sender, receptor) {
+Blockchain.prototype.createNewTransaction = function (
+  data,
+  responsable,
+  paciente
+) {
   const newTransaction = {
     data: data,
-    sender: sender,
-    receptor: receptor,
+    responsable: responsable,
+    paciente: paciente,
     TransUUID: v4().split("-").join(""),
     /**Unique Id for every transaction */
   };
   return newTransaction;
-  /*
-  this.pendingTransactions.push(newTransaction);
-devolvemos el último bloque, obtenemos el indice de este bloque
-(['index']) y al añadir + 1 nos da el número de bloque de la 
-transacción que acabamos de añadir
-*/
+
+  /*this.pendingTransactions.push(newTransaction);
+  devolvemos el último bloque, obtenemos el indice de este bloque
+  (['index']) y al añadir + 1 nos da el número de bloque de la 
+  transacción que acabamos de añadir */
+
   /**
    * NOTA: AÑADIR ['variable'] AL LADO DE UN OBJETO, OBTIENE EL VALOR
    * DE ESA 'variable' EN ESE OBJETO CONCRETO.
@@ -118,9 +110,7 @@ Blockchain.prototype.proofOfWork = function (
   currentBlockData
 ) {
   let nonce = 0;
-
   let hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
-
   while (hash.substring(0, 4) !== "0000") {
     nonce++;
     hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
@@ -133,7 +123,6 @@ Blockchain.prototype.pushTransaccionaPendientes = function (ObjTransaction) {
   return this.getLastBlock()["index"] + 1;
 };
 /**
- *
  * chainValidation to validate the other chains inside of the network
  *  comparing them to the chain that is hosted on the current node
  * for this, we iterate thrpugh every block inside of the blockchain
@@ -187,62 +176,3 @@ Blockchain.prototype.chainValidation = function (blockchain) {
   }
   return cadenaValida;
 };
-/** 
-const options = {
-  /**user: "user",
-  pass: "PASSWORD",
-  */
-/** 
-  auth: {
-    username: "user",
-    password: "PASSWORD",
-  },
-};
-const uri = "mongodb://localhost:27017/Blockchain";
-const client = new MongoClient(uri, options);
-async function main() {
-  try {
-    // Connect to the MongoDB cluster
-    await client.connect();
-    const data = await listDatabases(client);
-    //console.log(data);
-
-    return Object.values(data);
-
-    // Make the appropriate DB calls
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-main().catch(console.error);
-
-async function listDatabases(client) {
-  const cursor = await client
-    .db("Blockchain")
-    .collection("blockschemas")
-    .find()
-    .toArray();
-
-  pepas(Object.values(cursor));
-  return Object.values(cursor);
-}
-function pepas(hola) {
-  cadem = hola;
-  //console.log(chaine);
-  //console.log(cadem);
-  return cadem;
-}
-*/
-/**
-  const chains = async () => {
-    await main();
-    //console.log(main());
-    //console.log(cadena);
-  };
-
-  (async () => {
-    await chains();
-  })();
-  console.log(cadem);
-  * */

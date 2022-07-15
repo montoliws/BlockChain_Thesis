@@ -28,8 +28,8 @@ const meddata = new Blockchain();
 app.post("/transaction/broadcast", function (req, res) {
   const newTransaction = meddata.createNewTransaction(
     req.body.data,
-    req.body.sender,
-    req.body.receptor
+    req.body.responsable,
+    req.body.paciente
   );
   meddata.pushTransaccionaPendientes(newTransaction);
   const requestPromises = [];
