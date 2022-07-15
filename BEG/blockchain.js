@@ -3,8 +3,13 @@ var sha256 = require("js-sha256");
 const currentNodeUrl = process.argv[3];
 const { v4 } = require("uuid");
 let mongoose = require("mongoose");
+<<<<<<< Updated upstream
 //let blockchainModel = mongoose.model("BlockSchema");
 
+=======
+let blockchainModel = mongoose.model("BlockSchema");
+const macadenain = require("./database/index");
+>>>>>>> Stashed changes
 module.exports = Blockchain;
 
 function Blockchain() {
@@ -123,9 +128,7 @@ Blockchain.prototype.proofOfWork = function (
   return nonce;
 };
 
-Blockchain.prototype.addTransactionToPendingTransactions = function (
-  ObjTransaction
-) {
+Blockchain.prototype.pushTransaccionaPendientes = function (ObjTransaction) {
   this.pendingTransactions.push(ObjTransaction);
   return this.getLastBlock()["index"] + 1;
 };
@@ -184,3 +187,62 @@ Blockchain.prototype.chainValidation = function (blockchain) {
   }
   return cadenaValida;
 };
+/** 
+const options = {
+  /**user: "user",
+  pass: "PASSWORD",
+  */
+/** 
+  auth: {
+    username: "user",
+    password: "PASSWORD",
+  },
+};
+const uri = "mongodb://localhost:27017/Blockchain";
+const client = new MongoClient(uri, options);
+async function main() {
+  try {
+    // Connect to the MongoDB cluster
+    await client.connect();
+    const data = await listDatabases(client);
+    //console.log(data);
+
+    return Object.values(data);
+
+    // Make the appropriate DB calls
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+main().catch(console.error);
+
+async function listDatabases(client) {
+  const cursor = await client
+    .db("Blockchain")
+    .collection("blockschemas")
+    .find()
+    .toArray();
+
+  pepas(Object.values(cursor));
+  return Object.values(cursor);
+}
+function pepas(hola) {
+  cadem = hola;
+  //console.log(chaine);
+  //console.log(cadem);
+  return cadem;
+}
+*/
+/**
+  const chains = async () => {
+    await main();
+    //console.log(main());
+    //console.log(cadena);
+  };
+
+  (async () => {
+    await chains();
+  })();
+  console.log(cadem);
+  * */

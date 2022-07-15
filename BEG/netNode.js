@@ -31,7 +31,7 @@ app.post("/transaction/broadcast", function (req, res) {
     req.body.sender,
     req.body.receptor
   );
-  meddata.addTransactionToPendingTransactions(newTransaction);
+  meddata.pushTransaccionaPendientes(newTransaction);
   const requestPromises = [];
   meddata.networkNodes.forEach((networkNodeUrl) => {
     const requestOptions = {
@@ -50,14 +50,15 @@ app.post("/transaction/broadcast", function (req, res) {
   });
 });
 
-app.get("/blockchain", function (req, res) {
-  res.send(meddata);
+app.get("/blockchain", async function (req, res) {
+  const chain = await blockchainModel.find();
+  meddata.chain = chain;
+  res.send(chain);
 });
 
 app.post("/transaction", function (req, res) {
   const newTransaction = req.body;
-  const blockIndex =
-    meddata.addTransactionToPendingTransactions(newTransaction);
+  const blockIndex = meddata.pushTransaccionaPendientes(newTransaction);
   res.json({
     note: `La transacción será añadida en el bloque: ${blockIndex}.`,
   });
