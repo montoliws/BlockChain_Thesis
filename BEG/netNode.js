@@ -9,7 +9,8 @@ const nodeAddress = v4().split("-").join("");
 const rp = require("request-promise");
 // request-promise is deprecated ?¿?¿? Hay que solucionarlo ¿Problema?
 //To have different port values every time
-const port = process.argv[2];
+//const port = process.argv[2];
+port = process.argv[2];
 let database = require("./database");
 let chalk = require("chalk");
 let blockchainModel = mongoose.model("BlockSchema");
@@ -31,7 +32,7 @@ app.post("/transaction/broadcast", function (req, res) {
     req.body.responsable,
     req.body.paciente
   );
-  meddata.pushTransaccionaPendientes(newTransaction);
+  meddata.pushTransaccionesPendientes(newTransaction);
   const requestPromises = [];
   meddata.networkNodes.forEach((networkNodeUrl) => {
     const requestOptions = {
@@ -51,57 +52,59 @@ app.post("/transaction/broadcast", function (req, res) {
 });
 
 app.get("/blockchain", async function (req, res) {
-  const chain = await blockchainModel.find();
-  meddata.chain = chain;
-  res.send(chain);
+  //const chain = await blockchainModel.find();
+  //meddata.chain = chain;
+  res.send(meddata);
 });
 
 app.post("/transaction", function (req, res) {
   const newTransaction = req.body;
-  const blockIndex = meddata.pushTransaccionaPendientes(newTransaction);
+  const blockIndex = meddata.pushTransaccionesPendientes(newTransaction);
   res.json({
     note: `La transacción será añadida en el bloque: ${blockIndex}.`,
   });
 });
 
 app.get("/mine", async function (req, res) {
-  const lastBlock = meddata.getLastBlock();
+  const chain = await blockchainModel.find();
+  meddata.chain = chain;
+  if (meddata.chain.length == 0) {
+    meddata.createNewBlock(58, "0", "0");
+  }
+
+  const lastBlock = meddata.chain[meddata.chain.length - 1];
   const previousBlockHash = lastBlock["hash"];
+
   const currentBlockData = {
     transactions: meddata.pendingTransactions,
     index: lastBlock["index"] + 1,
   };
-  console.log("Antes del nonce");
+
   const nonce = meddata.proofOfWork(previousBlockHash, currentBlockData);
-  console.log("Despues del nonce");
+
   const newBlockHash = meddata.hashBlock(
     previousBlockHash,
     currentBlockData,
     nonce
   );
-  console.log;
+
   const newBlock = meddata.createNewBlock(
     nonce,
     previousBlockHash,
     newBlockHash
   );
   const requestPromises = [];
-  meddata.networkNodes.forEach((networkNodeUrl) => {
+
+  await meddata.networkNodes.forEach((networkNodeUrl) => {
     const requestOptions = {
       uri: networkNodeUrl + "/recive-new-block",
       method: "POST",
       body: { newBlock: newBlock },
       json: true,
     };
+
     requestPromises.push(rp(requestOptions));
   });
-  Promise.all(requestPromises).then((data) => {
-    res.json({
-      note: "Se ha completado el minado de un nuevo nodo",
-      block: newBlock,
-    });
-  });
-
   let newBlockMod = new blockchainModel(newBlock);
   console.log(newBlockMod);
 
@@ -109,6 +112,12 @@ app.get("/mine", async function (req, res) {
     if (err)
       return console.log(chalk.red("cannot save the block", err.message));
     console.log(chalk.green("Block saved on DB"));
+  });
+  Promise.all(requestPromises).then((data) => {
+    res.json({
+      note: "Se ha completado el minado de un nuevo nodo",
+      block: newBlock,
+    });
   });
 
   /**Reward for mining a blockSi
@@ -156,7 +165,6 @@ app.post("/register-and-broadcast-node", function (req, res) {
         },
         json: true,
       };
-
       return rp(bulkRegisterOptions);
     })
     .then((data) => {
@@ -171,14 +179,25 @@ app.post("/register-and-broadcast-node", function (req, res) {
     });
 });
 
-app.post("/recive-new-block", function (req, res) {
+app.post("/recive-new-block", async function (req, res) {
+  const chain = await blockchainModel.find();
+  meddata.chain = chain;
   const newBlock = req.body.newBlock;
-  const lastBlock = meddata.getLastBlock();
+  const lastBlock = meddata.chain[meddata.chain.length - 1];
   if (
     lastBlock.hash === newBlock.previousBlockHash &&
     lastBlock["index"] + 1 === newBlock["index"]
   ) {
+    let newBlockMod = new blockchainModel(newBlock);
+    console.log(newBlockMod);
+
+    newBlockMod = await newBlockMod.save((err) => {
+      if (err)
+        return console.log(chalk.red("cannot save the block", err.message));
+      console.log(chalk.green("Block saved on DB"));
+    });
     meddata.chain.push(newBlock);
+
     meddata.pendingTransactions = [];
     res.json({
       note: "El nuevo bloque ha sido recibido y aceptado con exito",

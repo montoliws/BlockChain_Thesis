@@ -12,7 +12,6 @@ function Blockchain() {
   this.networkNodes = [];
   this.currentNodeUrl = currentNodeUrl;
   //To create our genesis block we use createNewBlock method inside Blockchain
-  this.createNewBlock(58, "0", "0");
 }
 
 Blockchain.prototype.createNewBlock = function (
@@ -118,7 +117,7 @@ Blockchain.prototype.proofOfWork = function (
   return nonce;
 };
 
-Blockchain.prototype.pushTransaccionaPendientes = function (ObjTransaction) {
+Blockchain.prototype.pushTransaccionesPendientes = function (ObjTransaction) {
   this.pendingTransactions.push(ObjTransaction);
   return this.getLastBlock()["index"] + 1;
 };
