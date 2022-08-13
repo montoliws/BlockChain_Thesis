@@ -61,14 +61,16 @@ Blockchain.prototype.getLastBlock = function () {
 
 Blockchain.prototype.createNewTransaction = function (
   data,
+  address,
   responsable,
   paciente
 ) {
   const newTransaction = {
     data: data,
+    address: address,
     responsable: responsable,
     paciente: paciente,
-    TransUUID: v4().split("-").join(""),
+    transUUID: v4().split("-").join(""),
     /**Unique Id for every transaction */
   };
   return newTransaction;
@@ -127,6 +129,70 @@ Blockchain.prototype.pushTransaccionesPendientes = function (ObjTransaction) {
  * for this, we iterate thrpugh every block inside of the blockchain
  * and verify whetheror not allof the hashesalign correctly.
  */
+
+Blockchain.prototype.getDatabyAddress = function (address) {
+  const addressData = [];
+  this.chain.forEach((block) => {
+    block.transactions.forEach((transaction) => {
+      if (transaction.address === address) {
+        addressData.push(transaction);
+      }
+    });
+  });
+  return addressData;
+};
+
+Blockchain.prototype.getDatabyDoctor = function (responsable) {
+  const doctorTransact = [];
+  this.chain.forEach((block) => {
+    block.transactions.forEach((transaction) => {
+      if (transaction.responsable === responsable) {
+        doctorTransact.push(transaction);
+      }
+    });
+  });
+  return doctorTransact;
+};
+
+Blockchain.prototype.getDatabyPatient = function (paciente) {
+  const patientTransact = [];
+  this.chain.forEach((block) => {
+    block.transactions.forEach((transaction) => {
+      if (transaction.paciente === paciente) {
+        patientTransact.push(transaction);
+      }
+    });
+  });
+  return patientTransact;
+};
+
+Blockchain.prototype.getBlock = function (blockHash) {
+  let bloqueCorrecto = null;
+  this.chain.forEach((block) => {
+    if (block.hash === blockHash) {
+      bloqueCorrecto = block;
+    }
+  });
+  return bloqueCorrecto;
+};
+
+Blockchain.prototype.getTransaction = function (transUUID) {
+  let transaccionCorrecta = null;
+  let bloqueCorrecto = null;
+  this.chain.forEach((block) => {
+    block.transactions.forEach((transaction) => {
+      if (transaction.transUUID === transUUID) {
+        transaccionCorrecta = transaction;
+        bloqueCorrecto = block;
+      }
+    });
+  });
+  return {
+    transaction: transaccionCorrecta,
+    block: bloqueCorrecto,
+  };
+};
+
 Blockchain.prototype.chainValidation = function (blockchain) {
   let cadenaValida = true;
   for (var i = 1; i < blockchain.length; i++) {

@@ -29,6 +29,7 @@ const meddata = new Blockchain();
 app.post("/transaction/broadcast", function (req, res) {
   const newTransaction = meddata.createNewTransaction(
     req.body.data,
+    req.body.address,
     req.body.responsable,
     req.body.paciente
   );
@@ -52,8 +53,8 @@ app.post("/transaction/broadcast", function (req, res) {
 });
 
 app.get("/blockchain", async function (req, res) {
-  //const chain = await blockchainModel.find();
-  //meddata.chain = chain;
+  const chain = await blockchainModel.find();
+  meddata.chain = chain;
   res.send(meddata);
 });
 
@@ -125,6 +126,50 @@ app.get("/mine", async function (req, res) {
    */
 });
 
+app.get("/address/:address", function (req, res) {
+  const address = req.params.address;
+  const addressData = meddata.getDatabyAddress(address);
+  res.json({
+    addressData: addressData,
+  });
+});
+
+app.get("/doctor/:doctor", function (req, res) {
+  const doctor = req.params.doctor;
+  const doctorData = meddata.getDatabyDoctor(doctor);
+  res.json({
+    doctorData: doctorData,
+  });
+});
+
+app.get("/patient/:patient", function (req, res) {
+  const patient = req.params.patient;
+  const patientData = meddata.getDatabyPatient(patient);
+  res.json({
+    patientData: patientData,
+  });
+});
+
+app.get("/block/:blockHash", function (req, res) {
+  const blockHash = req.params.blockHash;
+  const correctBlock = meddata.getBlock(blockHash);
+  res.json({
+    block: correctBlock,
+  });
+});
+
+app.get("/transaction/:transactionId", function (req, res) {
+  const transactionId = req.params.transactionId;
+  const datosTransacc = meddata.getTransaction(transactionId);
+  res.json({
+    transaction: datosTransacc.transaction,
+    block: datosTransacc.block,
+  });
+});
+
+app.get("/views", function (req, res) {
+  res.sendFile("./views/index.html", { root: __dirname });
+});
 /**
  * DIFFERENCE BETWEEN registerandbroadcast and register: whenever we want to register
  * a new node we are gonna use registerandbroadcast, this will register the node on its
@@ -239,7 +284,7 @@ app.post("/register-nodes-bulk", function (req, res) {
   res.json({ note: "Bulk registration successful." });
 });
 
-app.get("/consensus", function (req, res) {
+app.get("/consensus", async function (req, res) {
   const requestPromises = [];
   meddata.networkNodes.forEach((networkNodeUrl) => {
     const requestOptions = {
@@ -270,8 +315,13 @@ app.get("/consensus", function (req, res) {
         chain: meddata.chain,
       });
     } else {
+      await blockchainModel.deleteMany({index: { $gte: 0}});
       meddata.chain = newLongestChain;
       meddata.pendingTransactions = newPendingTransactions;
+      for(var i = 0; i<chain.length; i++){
+        
+      }
+
       res.json({
         note: "La cadena actual ha sido reemplazada.",
         chain: meddata.chain,
