@@ -13,14 +13,6 @@ function Blockchain() {
   this.networkNodes = [];
   this.currentNodeUrl = currentNodeUrl;
   //To create our genesis block we use createNewBlock method inside Blockchain
-<<<<<<< Updated upstream
-=======
-  blckGenesis = this.createNewBlock(58, "0", "0");
-  let newBlockGen = new blockchainModel(blckGenesis);
-  console.log(newBlockMod);
-
-  newBlockGen = await newBlockGen.save
->>>>>>> Stashed changes
 }
 
 Blockchain.prototype.createNewBlock = function (
