@@ -28,4 +28,8 @@ let BlockchainSchema = new Schema({
     type: Schema.Types.String,
   },
 });
-module.exports = mongoose.model("BlockSchema", BlockchainSchema);
+module.exports = mongoose.model(
+  "BlockSchema",
+  BlockchainSchema,
+  "blockschemas"
+);

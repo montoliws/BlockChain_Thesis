@@ -53,8 +53,8 @@ app.post("/transaction/broadcast", function (req, res) {
 });
 
 app.get("/blockchain", async function (req, res) {
-  const chain = await blockchainModel.find();
-  meddata.chain = chain;
+  //const chain = await blockchainModel.find();
+  //meddata.chain = chain;
   res.send(meddata);
 });
 
@@ -69,8 +69,27 @@ app.post("/transaction", function (req, res) {
 app.get("/mine", async function (req, res) {
   const chain = await blockchainModel.find();
   meddata.chain = chain;
+  const requestPromises = [];
   if (meddata.chain.length == 0) {
-    meddata.createNewBlock(58, "0", "0");
+    const genesis = meddata.createNewBlock(58, "0", "0");
+    let newBlockGen = new blockchainModel(genesis);
+
+    newBlockGen = await newBlockGen.save((err) => {
+      if (err)
+        return console.log(chalk.red("cannot save the block", err.message));
+      console.log(chalk.green("Block saved on DB"));
+    });
+
+    await meddata.networkNodes.forEach((networkNodeUrl) => {
+      const requestOptions = {
+        uri: networkNodeUrl + "/recive-new-block",
+        method: "POST",
+        body: { newBlock: genesis },
+        json: true,
+      };
+
+      requestPromises.push(rp(requestOptions));
+    });
   }
 
   const lastBlock = meddata.chain[meddata.chain.length - 1];
@@ -94,8 +113,15 @@ app.get("/mine", async function (req, res) {
     previousBlockHash,
     newBlockHash
   );
-  const requestPromises = [];
 
+  let newBlockMod = new blockchainModel(newBlock);
+  console.log(newBlockMod);
+
+  newBlockMod = await newBlockMod.save((err) => {
+    if (err)
+      return console.log(chalk.red("cannot save the block", err.message));
+    console.log(chalk.green("Block saved on DB"));
+  });
   await meddata.networkNodes.forEach((networkNodeUrl) => {
     const requestOptions = {
       uri: networkNodeUrl + "/recive-new-block",
@@ -105,14 +131,6 @@ app.get("/mine", async function (req, res) {
     };
 
     requestPromises.push(rp(requestOptions));
-  });
-  let newBlockMod = new blockchainModel(newBlock);
-  console.log(newBlockMod);
-
-  newBlockMod = await newBlockMod.save((err) => {
-    if (err)
-      return console.log(chalk.red("cannot save the block", err.message));
-    console.log(chalk.green("Block saved on DB"));
   });
   Promise.all(requestPromises).then((data) => {
     res.json({
@@ -227,9 +245,26 @@ app.post("/register-and-broadcast-node", function (req, res) {
 app.post("/recive-new-block", async function (req, res) {
   const chain = await blockchainModel.find();
   meddata.chain = chain;
+
   const newBlock = req.body.newBlock;
   const lastBlock = meddata.chain[meddata.chain.length - 1];
-  if (
+  if (meddata.chain.length === 0) {
+    let newBlockMod = new blockchainModel(newBlock);
+    console.log(newBlockMod);
+
+    newBlockMod = await newBlockMod.save((err) => {
+      if (err)
+        return console.log(chalk.red("cannot save the block", err.message));
+      console.log(chalk.green("Block saved on DB"));
+    });
+    meddata.chain.push(newBlock);
+
+    meddata.pendingTransactions = [];
+    res.json({
+      note: "El nuevo bloque ha sido recibido y aceptado con exito",
+      newBlock: newBlock,
+    });
+  } else if (
     lastBlock.hash === newBlock.previousBlockHash &&
     lastBlock["index"] + 1 === newBlock["index"]
   ) {
@@ -292,14 +327,17 @@ app.get("/consensus", async function (req, res) {
       method: "GET",
       json: true,
     };
+
     requestPromises.push(rp(requestOptions));
   });
-  Promise.all(requestPromises).then((blockchains) => {
+  Promise.all(requestPromises).then(async (blockchains) => {
     const chainLength = meddata.chain.length;
+    console.log("Longitud max length" + chainLength);
     let maxLength = chainLength;
     let newLongestChain = null;
     let newPendingTransactions = null;
     blockchains.forEach((blockchain) => {
+      console.log("Longitud de la otra cadena" + blockchain.chain.length);
       if (blockchain.chain.length > maxLength) {
         maxLength = blockchain.chain.length;
         newLongestChain = blockchain.chain;
@@ -315,16 +353,27 @@ app.get("/consensus", async function (req, res) {
         chain: meddata.chain,
       });
     } else {
-      await blockchainModel.deleteMany({index: { $gte: 0}});
       meddata.chain = newLongestChain;
-      meddata.pendingTransactions = newPendingTransactions;
-      for(var i = 0; i<chain.length; i++){
-        
-      }
+      blockchainModel.deleteMany({}).then(function () {
+        meddata.pendingTransactions = newPendingTransactions;
+        meddata.chain.forEach(function (item) {
+          let newBlock = item;
+          let newBlockMod = new blockchainModel(newBlock);
+          console.log(newBlockMod);
 
-      res.json({
-        note: "La cadena actual ha sido reemplazada.",
-        chain: meddata.chain,
+          newBlockMod.save((err) => {
+            if (err)
+              return console.log(
+                chalk.red("cannot save the block", err.message)
+              );
+            console.log(chalk.green("Block saved on DB"));
+          });
+        });
+
+        res.json({
+          note: "La cadena actual ha sido reemplazada.",
+          chain: meddata.chain,
+        });
       });
     }
   });
