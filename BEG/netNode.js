@@ -2,16 +2,23 @@
 var express = require("express");
 var app = express();
 var mongoose = require("mongoose");
-
+var async = require("async");
 //Set a random value as a user id
 const { v4 } = require("uuid");
 const nodeAddress = v4().split("-").join("");
 const rp = require("request-promise");
+let databases = require("./database");
+var MongoClient = require("mongodb").MongoClient;
+const client = new MongoClient(
+  "mongodb://user:PASSWORD@localhost:27018/Blockchain"
+);
+const database = client.db("Blockchain");
+const docs = database.collection("blockschemas");
 // request-promise is deprecated ?¿?¿? Hay que solucionarlo ¿Problema?
 //To have different port values every time
 //const port = process.argv[2];
 port = process.argv[2];
-let database = require("./database");
+
 let chalk = require("chalk");
 let blockchainModel = mongoose.model("BlockSchema");
 
@@ -55,6 +62,9 @@ app.post("/transaction/broadcast", function (req, res) {
 app.get("/blockchain", async function (req, res) {
   //const chain = await blockchainModel.find();
   //meddata.chain = chain;
+  const chain = await blockchainModel.find().sort({ index: 1 });
+  meddata.chain = chain;
+
   res.send(meddata);
 });
 
@@ -232,7 +242,7 @@ app.post("/register-and-broadcast-node", function (req, res) {
     })
     .then((data) => {
       /**
-       * La variable data son los datos que recivimos de la promesa de arriba.
+       * La variable data son los datos que recibimos de la promesa de arriba.
        * No vamos a utilizar estos datos pero hay que hacer este paso dentro de
        * este endpoint por lo que solo podemos hacerlo una vez la promesa se ha completado.
        */
@@ -243,7 +253,7 @@ app.post("/register-and-broadcast-node", function (req, res) {
 });
 
 app.post("/recive-new-block", async function (req, res) {
-  const chain = await blockchainModel.find();
+  const chain = await blockchainModel.find().sort({ index: 1 });
   meddata.chain = chain;
 
   const newBlock = req.body.newBlock;
@@ -255,7 +265,7 @@ app.post("/recive-new-block", async function (req, res) {
     newBlockMod = await newBlockMod.save((err) => {
       if (err)
         return console.log(chalk.red("cannot save the block", err.message));
-      console.log(chalk.green("Block saved on DB"));
+      console.log(chalk.green("Block saved on DB2"));
     });
     meddata.chain.push(newBlock);
 
@@ -319,7 +329,7 @@ app.post("/register-nodes-bulk", function (req, res) {
   res.json({ note: "Bulk registration successful." });
 });
 
-app.get("/consensus", async function (req, res) {
+app.get("/consensus", function (req, res) {
   const requestPromises = [];
   meddata.networkNodes.forEach((networkNodeUrl) => {
     const requestOptions = {
@@ -354,26 +364,19 @@ app.get("/consensus", async function (req, res) {
       });
     } else {
       meddata.chain = newLongestChain;
-      blockchainModel.deleteMany({}).then(function () {
-        meddata.pendingTransactions = newPendingTransactions;
-        meddata.chain.forEach(function (item) {
-          let newBlock = item;
-          let newBlockMod = new blockchainModel(newBlock);
-          console.log(newBlockMod);
+      meddata.pendingTransactions = newPendingTransactions;
+      await blockchainModel.deleteMany({});
+      const options = { ordered: true };
+      const result = await docs.insertMany(meddata.chain, options);
+      // await newBlockMod.save((err) => {
+      //   if (err)
+      //     return console.log(chalk.red("cannot save the block", err.message));
+      //   console.log(chalk.green("Block saved on DB"));
+      // });
 
-          newBlockMod.save((err) => {
-            if (err)
-              return console.log(
-                chalk.red("cannot save the block", err.message)
-              );
-            console.log(chalk.green("Block saved on DB"));
-          });
-        });
-
-        res.json({
-          note: "La cadena actual ha sido reemplazada.",
-          chain: meddata.chain,
-        });
+      res.json({
+        note: "La cadena actual ha sido reemplazada.",
+        chain: meddata.chain,
       });
     }
   });

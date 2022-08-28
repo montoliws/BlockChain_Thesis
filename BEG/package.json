@@ -4,6 +4,7 @@
   "description": "",
   "main": "netNode.js",
   "dependencies": {
+    "async": "^3.2.4",
     "crypto-js": "^4.1.1",
     "express": "^4.18.1",
     "js-sha256": "^0.9.0",
