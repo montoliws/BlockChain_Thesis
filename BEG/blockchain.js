@@ -56,17 +56,21 @@ Blockchain.prototype.getLastBlock = function () {
   return this.chain[this.chain.length - 1];
 };
 
-Blockchain.prototype.createNewTransaction = function (
-  data,
-  address,
-  responsable,
-  paciente
-) {
+Blockchain.prototype.createNewTransaction = function (newData) {
+  // newData = {
+  //   id: id,
+  //   address: address,
+  //   responsable: responsable,
+  //   paciente: paciente,
+  //   images: images, //.map((i) => btoa(i)),
+  // };
+
   const newTransaction = {
-    data: data,
-    address: address,
-    responsable: responsable,
-    paciente: paciente,
+    data: newData,
+    //address: address,
+    //responsable: responsable,
+    //paciente: paciente,
+    //images: images, //.map((i) => btoa(i)),
     transUUID: v4().split("-").join(""),
     /**Unique Id for every transaction */
   };
@@ -131,7 +135,7 @@ Blockchain.prototype.getDatabyAddress = function (address) {
   const addressData = [];
   this.chain.forEach((block) => {
     block.transactions.forEach((transaction) => {
-      if (transaction.address === address) {
+      if (transaction.data.address === address) {
         addressData.push(transaction);
       }
     });
@@ -139,11 +143,12 @@ Blockchain.prototype.getDatabyAddress = function (address) {
   return addressData;
 };
 
-Blockchain.prototype.getDatabyDoctor = function (responsable) {
+Blockchain.prototype.getDatabyDoctor = function (responsableStr) {
   const doctorTransact = [];
+  const responsable = responsableStr.toLowerCase();
   this.chain.forEach((block) => {
     block.transactions.forEach((transaction) => {
-      if (transaction.responsable === responsable) {
+      if (transaction.data.responsable.toLowerCase().includes(responsable)) {
         doctorTransact.push(transaction);
       }
     });
@@ -151,12 +156,17 @@ Blockchain.prototype.getDatabyDoctor = function (responsable) {
   return doctorTransact;
 };
 
-Blockchain.prototype.getDatabyPatient = function (paciente) {
+Blockchain.prototype.getDatabyPatient = function (pacienteStr) {
   const patientTransact = [];
+  const paciente = pacienteStr.toLowerCase();
   this.chain.forEach((block) => {
+    console.log(paciente);
     block.transactions.forEach((transaction) => {
-      if (transaction.paciente === paciente) {
+      console.log(transaction);
+      if (transaction.data.paciente.toLowerCase().includes(paciente)) {
         patientTransact.push(transaction);
+        console.log(transaction);
+        console.log(paciente);
       }
     });
   });
