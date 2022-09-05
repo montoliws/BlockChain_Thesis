@@ -10,7 +10,7 @@ const rp = require("request-promise");
 let databases = require("./database");
 var MongoClient = require("mongodb").MongoClient;
 const client = new MongoClient(
-  "mongodb://user:PASSWORD@localhost:27017/Blockchain"
+  "mongodb://user:PASSWORD@localhost:27018/Blockchain"
 );
 const database = client.db("Blockchain");
 const docs = database.collection("blockschemas");
@@ -67,6 +67,11 @@ app.get("/blockchain", async function (req, res) {
   meddata.chain = chain;
 
   res.send(meddata);
+});
+app.get("/blockchain1", function (req, res) {
+  res.json({
+    blockchainData: meddata.chain,
+  });
 });
 
 app.post("/transaction", function (req, res) {
