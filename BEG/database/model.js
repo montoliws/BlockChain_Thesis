@@ -33,3 +33,10 @@ module.exports = mongoose.model(
   BlockchainSchema,
   "blockschemas"
 );
+var imageSchema = new mongoose.Schema({
+  img: {
+    data: Buffer,
+    type: Schema.Types.String,
+  },
+});
+module.exports = new mongoose.model("Image", imageSchema);

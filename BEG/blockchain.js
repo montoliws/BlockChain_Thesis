@@ -2,14 +2,25 @@
 var sha256 = require("js-sha256");
 const currentNodeUrl = process.argv[3];
 const { v4 } = require("uuid");
+var assert = require("assert");
+var mongodb = require("mongodb");
+var MongoClient = mongodb.MongoClient; //use Grid via the native mongodb driver
+const client = new MongoClient(
+  "mongodb://user:PASSWORD@localhost:27017/Images"
+);
 
+const database = client.db("Images");
+const docs = database.collection("Images");
+var bucket = new mongodb.GridFSBucket(database, { bucketName: "imagesBucket" });
 module.exports = Blockchain;
+const fs = require("fs");
 
 function Blockchain() {
   //Todos los bloques que minemos, serán guardados en el array chain
   this.chain = [];
   //En el array pendingTransactions serán almacenadas todas las transacciones que aún no hayan sido almacenadas en un bloque
   this.pendingTransactions = [];
+  this.pendingImages = [];
   this.networkNodes = [];
   this.currentNodeUrl = currentNodeUrl;
 }
@@ -34,6 +45,21 @@ Blockchain.prototype.createNewBlock = function (
     hash: hash,
     previousBlockHash: previousBlockHash,
   };
+
+  for (var j = 0; j < this.pendingImages.length; j++) {
+    var transaction = this.pendingImages[j];
+    for (var i = 0; i < transaction.data.images.length; i++) {
+      let data = transaction.data.images[i];
+      let buff = new Buffer(data, "base64");
+      fs.writeFileSync("stack-abuse-logo-out.png", buff);
+      fs.createReadStream("./stack-abuse-logo-out.png")
+        .pipe(bucket.openUploadStream(transaction.data.imagesHash[i] + ".png"))
+        .on("error", function (error) {
+          assert.ifError(error);
+        });
+    }
+  }
+
   /** Al crear un nuevo bloque, colocamos todas las transacciones nuevas (pendingTransactions) en el
    * bloque nuevo. Por lo tanto, queremos borrar todo el array de transacciones
    *  pendientes para que podamos comenzar en el siguiente bloque. Sin embargo,
@@ -45,7 +71,7 @@ Blockchain.prototype.createNewBlock = function (
    *  sido validados. Se validan, se almacenan de manera definitiva, y son registrada en nuestra cadena
    *  de bloques cuando creamos un nuevo bloque con la ayuda del método createNewBlock.
    *  la propiedad |pendingTransactions| es como una propiedad de transacciones pendientes.|| */
-
+  this.pendingImages = [];
   this.pendingTransactions = [];
   this.chain.push(newBlock);
 
@@ -64,16 +90,39 @@ Blockchain.prototype.createNewTransaction = function (newData) {
   //   paciente: paciente,
   //   images: images, //.map((i) => btoa(i)),
   // };
-
+  const timer = Date.now();
+  const date = new Date(timer);
+  const sg = (images, a) => {
+    let r = [];
+    for (const img of images) r.push(sha256(img + a));
+    return r;
+  };
   const newTransaction = {
-    data: newData,
-    //address: address,
-    //responsable: responsable,
-    //paciente: paciente,
-    //images: images, //.map((i) => btoa(i)),
+    data: {
+      datos: newData.datos,
+      address: newData.address,
+      responsable: newData.responsable,
+      paciente: newData.paciente,
+      imageUniHash: sg(newData.images, date.toString()),
+      imagesHash: sg(newData.images, ""),
+    }, //.map((i) => btoa(i)),
     transUUID: v4().split("-").join(""),
+    timestamp: date,
     /**Unique Id for every transaction */
   };
+  const newTransaction2 = {
+    data: {
+      datos: newData.datos,
+      address: newData.address,
+      responsable: newData.responsable,
+      paciente: newData.paciente,
+      images: newData.images,
+      imagesHash: sg(newData.images, ""),
+    }, //.map((i) => btoa(i)),
+    timestamp: date,
+    /**Unique Id for every transaction */
+  };
+  this.pendingImages.push(newTransaction2);
   return newTransaction;
 
   /*this.pendingTransactions.push(newTransaction);
@@ -143,6 +192,54 @@ Blockchain.prototype.getDatabyAddress = function (address) {
   return addressData;
 };
 
+Blockchain.prototype.getImages = async function (imagen) {
+  const images = database.collection("imagesBucket.files");
+  let imgId = undefined;
+  const img = imagen + ".png";
+  const r1 = await images.find({});
+  //console.log(r1);
+  const data = (await r1.toArray()).find((e) => img === e.filename);
+  /*r1.toArray((err, result) => {
+    //console.log(result);
+    const img = imagen + ".png";
+    //console.log(img);
+    for (const e of result) {
+      if (img === e.filename) {
+        imgId = e._id.toString();
+        //console.log(imgId);
+      }
+    }
+  });*/
+  //console.log(data);
+  let imgData = null;
+  if (data !== undefined) {
+    imgId = data._id.toString();
+
+    const imagesFiles = database.collection("imagesBucket.chunks");
+    const r2 = await imagesFiles.find({});
+    const data2 = (await r2.toArray()).find(
+      (e) => imgId === e.files_id.toString()
+    );
+
+    if (data2 !== undefined) {
+      imgData = data2.data.toString("base64");
+    }
+  }
+  //console.log(imgId);
+  /* await imagesFiles.find().toArray((err, result) => {
+      //console.log(result);
+      for (const e of result) {
+        //console.log(e.files_id.toString());
+        if (imgId === e.files_id.toString()) {
+          //console.log(e.data);
+          imgData = Buffer.from(e.data).toString("base64");
+        }
+      }
+    });
+  }*/
+  console.log(imgData);
+  return imgData;
+};
 Blockchain.prototype.getDatabyDoctor = function (responsableStr) {
   const doctorTransact = [];
   const responsable = responsableStr.toLowerCase();
@@ -160,13 +257,11 @@ Blockchain.prototype.getDatabyPatient = function (pacienteStr) {
   const patientTransact = [];
   const paciente = pacienteStr.toLowerCase();
   this.chain.forEach((block) => {
-    console.log(paciente);
     block.transactions.forEach((transaction) => {
       console.log(transaction);
       if (transaction.data.paciente.toLowerCase().includes(paciente)) {
         patientTransact.push(transaction);
         console.log(transaction);
-        console.log(paciente);
       }
     });
   });

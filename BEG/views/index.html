@@ -24,7 +24,7 @@
     <div class="container" ng-controller="MainController">
       <div class="row">
         <div class="col-md-8 offset-md-2">
-          <h1 id="page-title">Explorador de bloques</h1>
+          <h2 id="page-title">Explorador de bloques</h2>
         </div>
       </div>
       <div class="row">
@@ -41,6 +41,7 @@
                 <option value="responsable">Responsable</option>
                 <option value="paciente">Paciente</option>
                 <option value="blockchain">Blockchain</option>
+                <option value="imagenes">Imágenes</option>
                 
               </select>
             </div>
@@ -122,6 +123,7 @@
                 <th scope="col" class="addrs">Responsable</th>
                 <th scope="col" class="addrs">Paciente</th>
                 <th scope="col" class="addrs">Centro</th>
+                <th scope="col" class="addrs">Fecha</th>
               </tr>
             </thead>
             <tbody>
@@ -129,6 +131,7 @@
                 <td>{{ transaction.data.responsable }}</td>
                 <td>{{ transaction.data.paciente }}</td>
                 <td>{{ transaction.data.address }}</td>
+                <td>{{ transaction.timestamp }}</td>
               </tr>
             </tbody>
           </table>
@@ -142,13 +145,15 @@
               <th scope="col" class="addrs">Datos</th>
               <th scope="col" class="addrs">Paciente</th>
               <th scope="col" class="addrs">Centro</th>
+            
             </tr>
           </thead>
           <tbody>
             <tr ng-repeat="transaction in doctorData">
-              <td>{{ transaction.data.id }}</td>
+              <td>{{ transaction.data.datos }}</td>
               <td>{{ transaction.data.paciente }}</td>
               <td>{{ transaction.data.address }}</td>
+
             </tr>
           </tbody>
         </table>
@@ -161,21 +166,26 @@
               <th scope="col" class="addrs">Datos</th>
               <th scope="col" class="addrs">Responsable</th>
               <th scope="col" class="addrs">Centro</th>
-              <th scope="col" class="addrs">Imagen</th>
+              <th scope="col" class="addrs">Fecha</th>
             </tr>
           </thead>
           <tbody>
             <tr ng-repeat="transaction in patientData">
-              <td>{{ transaction.data.id}}</td>
+              <td>{{ transaction.data.datos }}</td>
               <td>{{ transaction.data.responsable }}</td>
               <td>{{ transaction.data.address }}</td>
-              <td><img ng-repeat="image in transaction.data.images track by $index" ng-src="data:image/png;base64, {{ image }}"/></td>
+              <td>{{ transaction.timestamp }}</td>
+              <!--<td><img ng-repeat="image in transaction.data.images track by $index" ng-src="data:image/png;base64, {{ image }}"/></td>-->
             </tr>
           </tbody>
         </table>
         <!-- end 'display responsable' table -->
+        <h3 class="table-title" ng-if="imagenData">Imagen</h3>
+
+        <div class = "imagenes"><img ng-if="imagenData" ng-src="data:image/png;base64, {{ imagenData }}"/></div>
 
         <h3 class="table-title" ng-if="blockchainData">Blockchain</h3>
+
 
         <table class="table table-striped" ng-if="blockchainData">
           <thead>
@@ -204,6 +214,7 @@
         $scope.addressData = null;
         $scope.doctorData = null;
         $scope.patientData = null;
+        $scope.imagenData = null;
         $scope.initialSearchMade = false;
 
         $scope.fetchBlock = function (blockHash) {
@@ -259,6 +270,13 @@
           });
         };
 
+        $scope.fetchImagesData = function (imagen){
+          $http.get(`/images/${imagen}`).then((response) => {
+            $scope.imagenData = response.data.imagenData;
+            console.log(response)
+          });
+        };
+
         $scope.search = function (searchValue) {
           $scope.initialSearchMade = true;
           if ($scope.searchType === "block") {
@@ -273,6 +291,8 @@
             $scope.fetchPatientData(searchValue);
           } else if ($scope.searchType === "blockchain") {
             $scope.fetchBlockchainData();
+          }else if ($scope.searchType === "imagenes") {
+            $scope.fetchImagesData(searchValue);
           }
         };
       });
@@ -346,6 +366,18 @@
         width: 100%;
         table-layout: fixed;
         word-break: break-word;
+      }
+      .imagenes{
+        display: flex;
+        justify-content: center;
+      }
+      img{
+
+        border: 5px solid #1d1c1c;
+        width: 1000px;
+        height: 750px;
+        border-radius: 6px;
+
       }
     </style>
   </body>

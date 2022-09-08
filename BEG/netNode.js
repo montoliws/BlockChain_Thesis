@@ -34,6 +34,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 const meddata = new Blockchain();
 
 app.post("/transaction/broadcast", function (req, res) {
+  console.time("timeTransaction");
   const newTransaction = meddata.createNewTransaction(
     req.body.data
     // req.body.address,
@@ -58,6 +59,7 @@ app.post("/transaction/broadcast", function (req, res) {
       note: "La transacción ha sido creada y distribuida correctamente.",
     });
   });
+  console.timeEnd("timeTransaction");
 });
 
 app.get("/blockchain", async function (req, res) {
@@ -68,7 +70,9 @@ app.get("/blockchain", async function (req, res) {
 
   res.send(meddata);
 });
-app.get("/blockchain1", function (req, res) {
+app.get("/blockchain1", async function (req, res) {
+  const chain = await blockchainModel.find().sort({ index: 1 });
+  meddata.chain = chain;
   res.json({
     blockchainData: meddata.chain,
   });
@@ -83,6 +87,7 @@ app.post("/transaction", function (req, res) {
 });
 
 app.get("/mine", async function (req, res) {
+  console.time("timeMining");
   const chain = await blockchainModel.find();
   meddata.chain = chain;
   const requestPromises = [];
@@ -158,8 +163,16 @@ app.get("/mine", async function (req, res) {
   /**Reward for mining a blockSi
    * meddata.createNewTransaction(12, "11", nodeAddress)
    */
+  console.timeEnd("timeMining");
 });
 
+app.get("/images/:imagen", async function (req, res) {
+  const imagen = req.params.imagen;
+  const imagenData = await meddata.getImages(imagen);
+  res.json({
+    imagenData,
+  });
+});
 app.get("/address/:address", function (req, res) {
   const address = req.params.address;
   const addressData = meddata.getDatabyAddress(address);
